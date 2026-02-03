@@ -233,4 +233,4 @@ Para dúvidas, sugestões ou problemas, abra uma [issue](../../issues) no reposi
 
 ---
 
-**Desenvolvido com ❤️ para processamento eficiente de dados de CNPJs**
+**Desenvolvido para processamento eficiente de dados de CNPJs**
