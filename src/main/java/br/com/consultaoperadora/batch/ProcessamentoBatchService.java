@@ -56,8 +56,16 @@ public final class ProcessamentoBatchService {
     private final CsvWriterService writerService;
 
     public ProcessamentoBatchService(AppConfig config, MetricasProcessamento metricas) {
+        this(config, metricas, config.getUfsPermitidas());
+    }
+
+    /**
+     * Sobrecarga da Fase 3: permite ao backend HTTP usar um conjunto de UFs
+     * diferente do config global (ex.: validação de upload por requisição).
+     */
+    public ProcessamentoBatchService(AppConfig config, MetricasProcessamento metricas, List<String> ufsPermitidas) {
         this.config = config;
-        this.ufsPermitidas = config.getUfsPermitidas();
+        this.ufsPermitidas = List.copyOf(ufsPermitidas);
         this.metricas = metricas;
         this.readerService = new CsvReaderService(INPUT_ENCODING);
         this.writerService = new CsvWriterService(config.getOutputFolder());
@@ -198,7 +206,9 @@ public final class ProcessamentoBatchService {
 
             int filesWritten = 0;
             for (Operadora o : OPERADORAS_EM_ORDEM) {
-                filesWritten += writerService.export(state, o.fileNameToken(), operadoraData.get(o));
+                List<EmpresaRegistro> bucket = operadoraData.get(o);
+                metricas.addRegistroOperadora(o.fileNameToken(), bucket.size()); // Fase 3: dashboard
+                filesWritten += writerService.export(state, o.fileNameToken(), bucket);
             }
             metricas.incrementCsvFilesGerados(filesWritten);
 
