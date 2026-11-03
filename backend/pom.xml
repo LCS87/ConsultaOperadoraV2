@@ -59,6 +59,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- Necessario para @RequestParam/@PathVariable resolverem nomes
+                         de parametros via reflexion (Spring sem -parameters cai com 400) -->
+                    <parameters>true</parameters>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

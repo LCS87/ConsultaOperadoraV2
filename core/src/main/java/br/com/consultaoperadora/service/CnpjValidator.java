@@ -18,9 +18,27 @@ public final class CnpjValidator {
     private CnpjValidator() {
     }
 
-    /** Critério usado pelo pipeline hoje: não vazio + exatamente 14 dígitos. */
+    /** Critério usado pelo pipeline hoje: 14 dígitos (com ou sem máscara oficial). */
     public static boolean isFormatoValido(String cnpj) {
-        return cnpj != null && !cnpj.isEmpty() && DEZ_QUATRO_DIGITOS.matcher(cnpj).matches();
+        String digitos = apenasDigitos(cnpj);
+        return !digitos.isEmpty() && DEZ_QUATRO_DIGITOS.matcher(digitos).matches();
+    }
+
+    /**
+     * Remove máscara e retorna os dígitos. Para preservar a paridade com o legado,
+     * só aceita entradas que sejam puramente dígitos OU contenham exclusivamente
+     * os separadores da máscara oficial ("." , "/" , "-") — qualquer outro caractere
+     * (letras, espaços, símbolos) invalida.
+     */
+    public static String apenasDigitos(String cnpj) {
+        if (cnpj == null || cnpj.isEmpty()) {
+            return "";
+        }
+        // Rejeita strings que tenham caracteres fora de [0-9 . / -]
+        if (!cnpj.matches("[0-9./\\-]+")) {
+            return "";
+        }
+        return cnpj.replaceAll("[^\\d]", "");
     }
 
     /**

@@ -30,8 +30,8 @@ class ApiIntegracaoTest {
 
     private static final String CSV_OK = """
             cnpj_completo;razao_social;endereco_completo;email;ano_abertura;telefones
-            12345678000199;Alpha Ltda;Rua A;a@a.com;2010;82-3311-1200
-            12345678000199;Duplicada;Rua X;d@d.com;2010;82-3311-1200
+            12.345.678/0001-95;Alpha Ltda;Rua A;a@a.com;2010;82-3311-1200
+            12.345.678/0001-95;Duplicada;Rua X;d@d.com;2010;82-3311-1200
             INVALIDOCNPJ;Sem CNPJ;Rua Y;e@e.com;2011;82-3311-1200
             """;
 

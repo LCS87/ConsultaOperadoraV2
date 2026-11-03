@@ -58,6 +58,14 @@ public final class MotorClassificacaoService {
      * @throws IOException              em falha de leitura/validação do CSV
      */
     public Resultado classificarArquivo(Path csvPath) throws IOException {
+        return classificarArquivo(csvPath, true);
+    }
+
+    /**
+     * @param validarDigitosVerificadores {@code true} (API REST): critério rígido da
+     *        Receita (formato + DV). {@code false} (CLI/paridade): apenas 14 dígitos.
+     */
+    public Resultado classificarArquivo(Path csvPath, boolean validarDigitosVerificadores) throws IOException {
         String fileName = csvPath.getFileName().toString();
         String uf = extrairUf(fileName);
         if (uf == null) {
@@ -81,7 +89,9 @@ public final class MotorClassificacaoService {
             if (registro == null) {
                 return; // linha incompleta (paridade com legado)
             }
-            if (!CnpjValidator.isValidoCompleto(registro.cnpj())) {
+            if (validarDigitosVerificadores
+                    ? !CnpjValidator.isValidoCompleto(registro.cnpj())
+                    : !CnpjValidator.isFormatoValido(registro.cnpj())) {
                 return; // API REST usa critério rígido: formato + dígitos verificadores
             }
             if (!dedup.registerIfNew(registro.cnpj())) {
