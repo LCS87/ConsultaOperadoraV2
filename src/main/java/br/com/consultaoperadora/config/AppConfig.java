@@ -61,6 +61,14 @@ public final class AppConfig {
         return new AppConfig(Paths.get(input), Paths.get(output), pool, ufs);
     }
 
+    /**
+     * Cria uma cópia com pastas substituídas (Fase 3 — backend). Usado pelos jobs
+     * HTTP para isolar upload/resultado por execução sem tocar no config global.
+     */
+    public AppConfig withFolders(Path newInputFolder, Path newOutputFolder) {
+        return new AppConfig(newInputFolder, newOutputFolder, threadPoolSize, ufsPermitidas);
+    }
+
     private static Properties loadFileProperties() {
         Properties props = new Properties();
         try (InputStream in = AppConfig.class.getClassLoader()

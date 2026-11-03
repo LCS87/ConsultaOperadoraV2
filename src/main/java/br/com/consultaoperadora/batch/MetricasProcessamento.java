@@ -1,7 +1,10 @@
 package br.com.consultaoperadora.batch;
 
 import java.text.NumberFormat;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,6 +55,28 @@ public final class MetricasProcessamento {
 
     public boolean houveFalhas() {
         return failedFiles.get() > 0;
+    }
+
+    // ------------------------------------------------------------------
+    // Métricas por operadora (Fase 3) — usadas pelo dashboard da API REST.
+    // Aditivas: não alteram os contadores globais nem o toString legado.
+    // ------------------------------------------------------------------
+
+    private final ConcurrentHashMap<String, AtomicLong> porOperadora = new ConcurrentHashMap<>();
+
+    /** Conta um registro classificado em uma operadora (token do enum, ex.: CLARO). */
+    public void addRegistroOperadora(String operadoraToken, long count) {
+        if (operadoraToken == null || count <= 0) {
+            return;
+        }
+        porOperadora.computeIfAbsent(operadoraToken, k -> new AtomicLong()).addAndGet(count);
+    }
+
+    /** Cópia snapshot das contagens por operadora (ordem de inserção preservada). */
+    public Map<String, Long> getContagemPorOperadora() {
+        Map<String, Long> snapshot = new LinkedHashMap<>();
+        porOperadora.forEach((k, v) -> snapshot.put(k, v.get()));
+        return snapshot;
     }
 
     /** Formata número no padrão pt-BR (milhar com ponto), como nos logs originais. */

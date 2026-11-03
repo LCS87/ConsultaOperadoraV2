@@ -24,6 +24,15 @@ public final class CnpjValidator {
     }
 
     /**
+     * Validação completa usada pela API REST (Fase 3): formato E dígitos
+     * verificadores. O CLI mantém apenas o formato (paridade com o legado);
+     * a API, voltada a dados novos via upload, usa o critério rígido da Receita.
+     */
+    public static boolean isValidoCompleto(String cnpj) {
+        return isFormatoValido(cnpj) && digitosVerificadoresValidos(cnpj);
+    }
+
+    /**
      * Validação de módulo 11 dos dígitos verificadores (opcional, para uso futuro).
      * Aceita entrada com ou sem máscara; exige 14 dígitos.
      */
