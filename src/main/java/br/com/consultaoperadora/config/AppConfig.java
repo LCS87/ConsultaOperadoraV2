@@ -75,10 +75,13 @@ public final class AppConfig {
     }
 
     private static String resolve(String key, String defaultValue, Properties fileProps) {
-        String envKey = key.toUpperCase().replace('-', '_').replace('.', '_');
-        String value = System.getenv(envKey);
+        // Precedência: -Dpropriedade > variável de ambiente > application.properties > default.
+        // Propriedades de sistema vêm primeiro para permitir overrides pontuais por CLI
+        // (inclusive em JARs com Main-Class definida, onde JAVA_TOOL_OPTIONS pode atrasar).
+        String value = System.getProperty(key);
         if (value == null || value.isBlank()) {
-            value = System.getProperty(key);
+            String envKey = key.toUpperCase().replace('-', '_').replace('.', '_');
+            value = System.getenv(envKey);
         }
         if (value == null || value.isBlank()) {
             value = fileProps.getProperty(key);

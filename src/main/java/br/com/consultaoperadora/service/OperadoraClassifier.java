@@ -40,13 +40,13 @@ public final class OperadoraClassifier {
     public static String classifyRaw(String telefonesRaw) {
         String fullNumber = TelefoneNormalizer.normalizeFirstPhoneNumber(telefonesRaw);
         if (fullNumber.isEmpty() || fullNumber.length() < 12) {
-            return Operadora.SEM_OPERADORA.displayName();
+            return Operadora.SEM_OPERADORA.name();
         }
         try {
             PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
             PhoneNumber numberProto = phoneUtil.parse(fullNumber, "BR");
             if (!phoneUtil.isValidNumber(numberProto)) {
-                return Operadora.SEM_OPERADORA.displayName();
+                return Operadora.SEM_OPERADORA.name();
             }
             PhoneNumberType type = phoneUtil.getNumberType(numberProto);
             if (type == PhoneNumberType.FIXED_LINE) {
@@ -55,9 +55,9 @@ public final class OperadoraClassifier {
             if (type == PhoneNumberType.MOBILE || type == PhoneNumberType.FIXED_LINE_OR_MOBILE) {
                 return identifyCarrier(numberProto, fullNumber);
             }
-            return Operadora.SEM_OPERADORA.displayName();
+            return Operadora.SEM_OPERADORA.name();
         } catch (NumberParseException e) {
-            return Operadora.SEM_OPERADORA.displayName();
+            return Operadora.SEM_OPERADORA.name();
         } catch (Exception e) {
             // Comportamento legado: erro inesperado no mapper cai no fallback de prefixo
             return identifyCarrierFallback(fullNumber);
@@ -85,7 +85,7 @@ public final class OperadoraClassifier {
     /** Fallback histórico por dígito identificador (posições do número de 13 dígitos). */
     public static String identifyCarrierFallback(String fullNumber) {
         if (fullNumber.length() < 12) {
-            return Operadora.SEM_OPERADORA.displayName();
+            return Operadora.SEM_OPERADORA.name();
         }
         if (fullNumber.length() == 13) {
             String digitoIdentificador = fullNumber.substring(4, 5);
@@ -94,9 +94,9 @@ public final class OperadoraClassifier {
                 case "9" -> Operadora.VIVO.name();
                 case "8" -> Operadora.TIM.name();
                 case "3" -> Operadora.OI.name();
-                default -> Operadora.SEM_OPERADORA.displayName();
+                default -> Operadora.SEM_OPERADORA.name();
             };
         }
-        return Operadora.SEM_OPERADORA.displayName();
+        return Operadora.SEM_OPERADORA.name();
     }
 }

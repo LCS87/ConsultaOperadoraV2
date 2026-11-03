@@ -35,18 +35,20 @@ public final class CnpjValidator {
         if (digits.length() != 14 || digits.matches("^(\\d)\\1{13}$")) {
             return false; // tamanho errado ou todos os dígitos iguais (000...0 etc.)
         }
-        return dvValido(digits, 0, 12, 5) && dvValido(digits, 0, 13, 6);
+        return digits.charAt(12) == digitoVerificador(digits, DV1_WEIGHTS)
+                && digits.charAt(13) == digitoVerificador(digits, DV2_WEIGHTS);
     }
 
-    private static boolean dvValido(String digits, int start, int length, int weightStart) {
+    /** Pesos oficiais da Receita Federal, aplicados da esquerda para a direita. */
+    private static final int[] DV1_WEIGHTS = {5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
+    private static final int[] DV2_WEIGHTS = {6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2};
+
+    private static char digitoVerificador(String digits, int[] weights) {
         int sum = 0;
-        int weight = weightStart;
-        for (int i = start + length - 1; i >= start; i--) {
-            sum += (digits.charAt(i) - '0') * weight;
-            weight = weight == 2 ? 9 : weight - 1;
+        for (int i = 0; i < weights.length; i++) {
+            sum += (digits.charAt(i) - '0') * weights[i];
         }
         int remainder = sum % 11;
-        int expected = remainder < 2 ? 0 : 11 - remainder;
-        return digits.charAt(length) == (char) ('0' + expected);
+        return (char) ('0' + (remainder < 2 ? 0 : 11 - remainder));
     }
 }
