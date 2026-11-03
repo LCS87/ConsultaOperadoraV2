@@ -16,6 +16,11 @@ public enum Operadora {
     TIM("TIM"),
     OI("OI"),
     FIXO("FIXO"),
+    /**
+     * Legado: as FAIXAS DE OPERADORAS usam o rótulo com espaço ("SEM OPERADORA"
+     * no mapa interno de Main.java), mas o ARQUIVO de saída usa underscore
+     * ("SEM_OPERADORA.csv"). displayName preserva o primeiro; fileNameToken, o segundo.
+     */
     SEM_OPERADORA("SEM OPERADORA");
 
     private final String displayName;

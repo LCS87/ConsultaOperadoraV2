@@ -1,0 +1,7 @@
+cnpj_completo;razao_social;endereco_completo;email;ano_abertura;telefones
+11222333000181;Alpha Telecom Ltda;Rua A, 100 - Centro;alpha@x.com;2010;82-33111200
+11222333000181;Alpha duplicada;Rua A, 100;b@x.com;2010;82-33111200
+22333444000155;Beta Movel SA;Rua B, 200;c@x.com;2015;82-9111-1234
+33444555000166;Gamma Sem Fone;Rua C, 300;;2016;
+44;Delta CNPJ Invalido;Rua D;e@x.com;2017;(82) 99111-2345
+55555666000177;Epsilon Linha Curta;Rua E
