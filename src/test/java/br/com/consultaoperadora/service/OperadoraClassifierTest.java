@@ -46,22 +46,23 @@ class OperadoraClassifierTest {
 
     @ParameterizedTest
     @CsvSource({
-            "558269111234, CLARO",         // dígito identificador '6' (substring 4..5)
-            "558279111234, CLARO",         // '7'
-            "558299111234, VIVO",          // '9'
-            "558289111234, TIM",           // '8'
-            "558239111234, OI",            // '3'
-            "558219111234, SEM_OPERADORA", // '1' -> default
-            "558249111234, SEM_OPERADORA", // '4' -> default
-            "558229111234, SEM_OPERADORA", // '2' -> default
-            "558259111234, SEM_OPERADORA"  // '5' -> default
+            "5582691112345, CLARO",         // dígito identificador '6' (substring 4..5)
+            "5582791112345, CLARO",         // '7'
+            "5582991112345, VIVO",          // '9'
+            "5582891112345, TIM",           // '8'
+            "5582391112345, OI",            // '3'
+            "5582191112345, SEM_OPERADORA", // '1' -> default
+            "5582491112345, SEM_OPERADORA", // '4' -> default
+            "5582291112345, SEM_OPERADORA", // '2' -> default
+            "5582591112345, SEM_OPERADORA"  // '5' -> default
     })
     void fallbackMapeiaCadaDigitoIdentificadorConformeLegado(String numeroE164, String esperado) {
+        assertThat(numeroE164).hasSize(13); // o fallback só decide com 13 dígitos
         assertThat(OperadoraClassifier.identifyCarrierFallback(numeroE164)).isEqualTo(esperado);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "558", "55823111123", "5582311112345"}) // <12 ou !=13 dígitos
+    @ValueSource(strings = {"", "558", "55823111123", "558231111234", "55823111123456"}) // <12 ou >13 dígitos
     void fallbackForaDe13DigitosComPeloMenos12ViraSemOperadora(String numero) {
         assertThat(OperadoraClassifier.identifyCarrierFallback(numero))
                 .isEqualTo("SEM_OPERADORA");

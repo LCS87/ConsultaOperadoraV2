@@ -59,7 +59,7 @@ class TelefoneRegrasParidadeTest {
         // um numero curto, que depois e descartado por length < 12 na classificacao.
         org.junit.jupiter.api.Assertions.assertEquals("5500",
                 TelefoneNormalizer.normalizeFirstPhoneNumber("(00) numero invalido"));
-        org.junit.jupiter.api.Assertions.assertEquals("SEM OPERADORA",
+        org.junit.jupiter.api.Assertions.assertEquals("SEM_OPERADORA",
                 OperadoraClassifier.classifyRaw("(00) numero invalido"));
     }
 
@@ -71,13 +71,13 @@ class TelefoneRegrasParidadeTest {
         org.junit.jupiter.api.Assertions.assertEquals("VIVO", OperadoraClassifier.identifyCarrierFallback("5582912345678"));   // 9
         org.junit.jupiter.api.Assertions.assertEquals("TIM", OperadoraClassifier.identifyCarrierFallback("5582812345678"));    // 8
         org.junit.jupiter.api.Assertions.assertEquals("OI", OperadoraClassifier.identifyCarrierFallback("5582312345678"));     // 3
-        org.junit.jupiter.api.Assertions.assertEquals("SEM OPERADORA", OperadoraClassifier.identifyCarrierFallback("5582212345678")); // 2 => fora das faixas
-        org.junit.jupiter.api.Assertions.assertEquals("SEM OPERADORA", OperadoraClassifier.identifyCarrierFallback("558231234567"));  // 12 digitos: legado so decide com 13
+        org.junit.jupiter.api.Assertions.assertEquals("SEM_OPERADORA", OperadoraClassifier.identifyCarrierFallback("5582212345678")); // 2 => fora das faixas
+        org.junit.jupiter.api.Assertions.assertEquals("SEM_OPERADORA", OperadoraClassifier.identifyCarrierFallback("558231234567"));  // 12 digitos: legado so decide com 13
     }
 
     @Test
     void getOperadoraSemTelefoneValidoEhSemOperadora() {
-        org.junit.jupiter.api.Assertions.assertEquals("SEM OPERADORA", OperadoraClassifier.classifyRaw(""));
-        org.junit.jupiter.api.Assertions.assertEquals("SEM OPERADORA", OperadoraClassifier.classifyRaw("abcdefg"));
+        org.junit.jupiter.api.Assertions.assertEquals("SEM_OPERADORA", OperadoraClassifier.classifyRaw(""));
+        org.junit.jupiter.api.Assertions.assertEquals("SEM_OPERADORA", OperadoraClassifier.classifyRaw("abcdefg"));
     }
 }

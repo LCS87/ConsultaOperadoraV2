@@ -291,9 +291,20 @@ ConsultaOperadoraV2/
 - Suíte ampliada para **28 testes** (unidades dos serviços, paridade de regras de telefone, seleção de UF, regressão de pipeline e config);
 - Correções encontradas pelos testes: pesos do módulo 11 do CNPJ (algoritmo oficial da Receita) e precedência `-D` > env var no `AppConfig.resolve`.
 
+## 8.2 Conclusão da Fase 2 (suíte de testes e cobertura)
+
+- Infraestrutura: AssertJ + Mockito (mock-inline para estáticos da libphonenumber) + **JaCoCo** com gate `check` no `mvn verify`;
+- Suíte ampliada de 28 para **133 testes, todos verdes** (`mvn clean verify`);
+- Cobertura de linhas global: **83,1%** (meta ≥80% atingida; instruções 85,0%, métodos 88,8%, classes 92,3%);
+- Ramos antes inalcançáveis cobertos com mocks do *ambiente externo* apenas (nunca da regra de negócio): carrier vazio/nulo, falha do mapper, tipos não-móveis, parse inválido e exceção global do pipeline de classificação (`OperadoraClassifierFallbackTest`);
+- Testes de regressão/integração com dataset maior e casos-limite: encoding ISO-8859-1, detecção de delimitador (`,`/`;`/TAB), arquivo vazio, diretório de saída bloqueado, duplicados, CNPJ inválido, ramos de falha do batch e seleção de UF configurável;
+- Bug de paridade encontrado e corrigido: token `SEM OPERADORA` unificado para `SEM_OPERADORA` no enum;
+- Paridade byte-idêntica revalidada nesta fase: `java -jar` sobre `data/export/al_ativos.csv` produz os mesmos 3 CSVs da baseline da Fase 0/1 (`cmp` sem diferenças).
+
 ## 9. Próximos Passos Imediatos
 
 1. **[Feito]** Registrar este plano no repositório.
 2. **[Feito — Fase 0]** Restaurar o `pom.xml` válido, config externa e Logback; legado copiado para `legacy/Main.java`.
 3. **[Feito — Fase 1]** Quebrar o `Main` em serviços dedicados (`CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`/`CsvWriterService`, `DeduplicationService`, `ProcessamentoBatchService`, `MetricasProcessamento`) mantendo comportamento idêntico.
-4. **[PRÓXIMO — Fase 2]** Elevar cobertura ≥80% nos serviços (JaCoCo) + teste de regressão com dataset de exemplo maior e casos-limite de encoding/delimitador.
+4. **[Feito — Fase 2]** Cobertura ≥80% via JaCoCo (83,1%), 133 testes verdes, regressão com dataset maior e casos-limite de encoding/delimitador.
+5. **[PRÓXIMO — Fase 3]** Extrair o núcleo para módulo reutilizável e criar a aplicação **Spring Boot** (REST API + OpenAPI/Swagger) consumindo os serviços existentes.
