@@ -36,3 +36,8 @@ Thumbs.db
 output/
 arquivos_finalizados/
 processamento.log
+# Dados de exemplo gerados localmente (Fase 0)
+data/
+
+# Maven shade
+dependency-reduced-pom.xml
