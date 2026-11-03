@@ -22,6 +22,10 @@ import static org.mockito.Mockito.when;
  *
  * ATENÇÃO aos números usados: o fallback legado decide pelo dígito no ÍNDICE 4 do
  * E.164 ("55" + DDD + ...). Em "5582991112345" o índice 4 é '9' => VIVO.
+ * Nos ramos de fallback usamos o formato DD-NNNNN-NNNN (ex.: "82-99111-2345"),
+ * pois o padrão do normalizador exige separadores para capturar 5+4 dígitos;
+ * sem separadores, a gulodice do regex (\d{4,5} seguido de \d{4}) tritura o
+ * nono dígito e o E.164 resultante tem outro dígito na posição 4.
  */
 class OperadoraClassifierFallbackTest {
 
@@ -40,10 +44,12 @@ class OperadoraClassifierFallbackTest {
     @Test
     void carrierVazioCaiNoFallbackPorDigitoIdentificador() throws Exception {
         try (Fixture f = new Fixture(true, PhoneNumberUtil.PhoneNumberType.MOBILE, "", null)) {
-            assertThat(OperadoraClassifier.classifyRaw("5582991112345")).isEqualTo("VIVO"); // índice4='9'
+            // normaliza para 5582991112345 -> índice4='9' -> VIVO
+            assertThat(OperadoraClassifier.classifyRaw("82-99111-2345")).isEqualTo("VIVO");
         }
         try (Fixture f = new Fixture(true, PhoneNumberUtil.PhoneNumberType.MOBILE, null, null)) {
-            assertThat(OperadoraClassifier.classifyRaw("5582891112345")).isEqualTo("TIM");  // índice4='8'
+            // normaliza para 5582891112345 -> índice4='8' -> TIM
+            assertThat(OperadoraClassifier.classifyRaw("82-89111-2345")).isEqualTo("TIM");
         }
     }
 
@@ -51,7 +57,7 @@ class OperadoraClassifierFallbackTest {
     void falhaDoCarrierMapperCaiNoFallback() throws Exception {
         try (Fixture f = new Fixture(true, PhoneNumberUtil.PhoneNumberType.FIXED_LINE_OR_MOBILE,
                 null, new IllegalStateException("base corrompida"))) {
-            assertThat(OperadoraClassifier.classifyRaw("5582991112345")).isEqualTo("VIVO");
+            assertThat(OperadoraClassifier.classifyRaw("82-99111-2345")).isEqualTo("VIVO");
         }
     }
 
@@ -84,7 +90,7 @@ class OperadoraClassifierFallbackTest {
         try (Fixture f = new Fixture(true, PhoneNumberUtil.PhoneNumberType.MOBILE, null, null)) {
             when(f.utilMock.getNumberType(any())).thenThrow(new RuntimeException("falha interna"));
             // ramo catch (Exception) -> identifyCarrierFallback: índice4='9' -> VIVO
-            assertThat(OperadoraClassifier.classifyRaw("5582991112345")).isEqualTo("VIVO");
+            assertThat(OperadoraClassifier.classifyRaw("82-99111-2345")).isEqualTo("VIVO");
         }
     }
 
