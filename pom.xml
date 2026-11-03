@@ -127,8 +127,13 @@
                         <configuration>
                             <rules>
                                 <rule>
-                                    <!-- Meta do plano: >=80% de instrucoes nas classes de servico -->
+                                    <!-- Meta do plano: >=80% de instrucoes nas classes de negocio/servico.
+                                         Main fica de fora por ser bootstrap CLI (System.exit/printUsage);
+                                         sera substituido pela app Spring Boot na Fase 5. -->
                                     <element>CLASS</element>
+                                    <excludes>
+                                        <exclude>br.com.consultaoperadora.Main</exclude>
+                                    </excludes>
                                     <includes>
                                         <include>br.com.consultaoperadora.service.*</include>
                                     </includes>

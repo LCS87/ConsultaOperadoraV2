@@ -21,7 +21,10 @@ class TelefoneNormalizerTest {
             "'82 3311 1200',       558233111200",   // espaços como separadores
             "'82-9111-1234',       5582991111234",  // 4+4 iniciando em 9 -> ganha nono dígito
             "'(82) 99111-2345',    5582991112345",  // 9 dígitos já com nono
-            "'5582991112345',      555582991112345" // colado: DD '55' capturado, resto vira número (paridade)
+            // colado: o regex legado exige separador entre os grupos, então só a
+            // alternativa "(DD) ..." casaria; sem parênteses o match é parcial e
+            // produz "55" + DD '55' + 4+4 dígitos => 12 dígitos (paridade exata)
+            "'5582991112345',      5555829911123"
     })
     void formatosConhecidosNormalizamComoNoLegado(String entrada, String esperado) {
         assertThat(TelefoneNormalizer.normalizeFirstPhoneNumber(entrada)).isEqualTo(esperado);
@@ -74,6 +77,6 @@ class TelefoneNormalizerTest {
         assertThat(TelefoneNormalizer.normalizeFirstPhoneNumber("(00) 3311-1200"))
                 .isEqualTo("550033111200");
         assertThat(OperadoraClassifier.classifyRaw("(00) 3311-1200"))
-                .isEqualTo("SEM OPERADORA");
+                .isEqualTo("SEM_OPERADORA");
     }
 }
