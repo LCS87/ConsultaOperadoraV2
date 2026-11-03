@@ -268,9 +268,24 @@ ConsultaOperadoraV2/
 
 ---
 
-## 8. Próximos Passos Imediatos
+## 8. Status de Execução
 
-1. **[Feito nesta entrega]** Registrar este plano no repositório.
-2. Restaurar o `pom.xml` válido (Fase 0) — o arquivo atual está corrompido (contém texto do `.gitignore`).
-3. Criar pasta `legacy/` e preservar o `Main.java` como referência de paridade.
-4. Iniciar Fase 1 (refatoração do núcleo) assim que o build estiver verde.
+| Fase | Status | Commit/Evidência |
+|---|---|---|
+| 0 — Fundação | ✅ **CONCLUÍDA (04/11/2026)** | `mvn clean verify` verde, 13 testes passando, JAR executável validado com CSV de exemplo; legado preservado em `legacy/Main.java` |
+| 1 — Refatoração do núcleo | ⏳ Próxima | — |
+| 2 a 7 | 📅 Pendentes | — |
+
+**Entregas da Fase 0:**
+- `pom.xml` válido recriado (Java 17, OpenCSV 5.9, libphonenumber + carrier, SLF4J/Logback, JUnit 5, shade p/ JAR executável);
+- `br.com.consultaoperadora.config.AppConfig`: caminhos, pool de threads e UFs vêm de env var > `-Dpropriedade` > `application.properties` (sem mais hardcoded de Windows);
+- Logs estruturados via Logback (console + arquivo rolante `processamento.log.gz`);
+- Smoke tests de paridade com o legado (nono dígito, fallback de operadora, filtro de UF configurável);
+- `.editorconfig` adicionado.
+
+## 9. Próximos Passos Imediatos
+
+1. **[Feito]** Registrar este plano no repositório.
+2. **[Feito — Fase 0]** Restaurar o `pom.xml` válido, config externa e Logback; legado copiado para `legacy/Main.java`.
+3. **[PRÓXIMO — Fase 1]** Quebrar o `Main` em serviços dedicados (`CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`/`CsvWriterService`, `DeduplicationService`, `ProcessamentoBatchService`, `MetricasProcessamento`) mantendo comportamento idêntico.
+4. Em seguida, Fase 2: suíte de testes ≥80% nos serviços + teste de regressão com dataset de exemplo.
