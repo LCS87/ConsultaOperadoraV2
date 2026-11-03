@@ -2,6 +2,7 @@ package br.com.consultaoperadora.service;
 
 import br.com.consultaoperadora.model.EmpresaRegistro;
 import br.com.consultaoperadora.model.Operadora;
+import br.com.consultaoperadora.batch.MetricasProcessamento;
 import org.junit.jupiter.api.Test;
 
 
@@ -53,12 +54,20 @@ class ServicosUnidadeTest {
 
     @Test
     void extraiColunasETruncaCnpj() {
-        EmpresaRegistro r = EmpresaRegistro.fromRow(
-                new String[]{" 12345678000199 ", "Razao", "End", "e@x", "2020", "(82) 99111-2345", "extra"]);
+        String[] linha = new String[7];
+        linha[0] = " 12345678000199 ";
+        linha[1] = "Razao";
+        linha[2] = "End";
+        linha[3] = "e@x";
+        linha[4] = "2020";
+        linha[5] = "(82) 99111-2345";
+        linha[6] = "extra";
+        EmpresaRegistro r = EmpresaRegistro.fromRow(linha);
         assertNotNull(r);
         assertEquals("12345678000199", r.cnpj());
         assertEquals("(82) 99111-2345", r.telefonesRaw());
-        String[] esperado = {" 12345678000199 ", "Razao", "End", "e@x", "2020", "(82) 99111-2345"};
+        String[] esperado = new String[6];
+        System.arraycopy(linha, 0, esperado, 0, 6);
         assertArrayEquals(esperado, r.asColumns());
     }
 

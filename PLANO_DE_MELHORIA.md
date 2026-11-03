@@ -283,9 +283,17 @@ ConsultaOperadoraV2/
 - Smoke tests de paridade com o legado (nono dígito, fallback de operadora, filtro de UF configurável);
 - `.editorconfig` adicionado.
 
+## 8.1 Conclusão da Fase 1 (refatoração do núcleo)
+
+- `Main` virou bootstrap mínimo; pipeline em `batch/ProcessamentoBatchService` + `batch/MetricasProcessamento`;
+- Serviços de responsabilidade única em `service/`: `CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`, `CsvWriterService`, `DeduplicationService`; DTOs em `model/` (`EmpresaRegistro` record, `Operadora` enum com `fromRaw`/`fileNameToken`);
+- Paridade com a baseline da Fase 0 comprovada: saída byte-idêntica (md5) para o dataset `al_ativos.csv`;
+- Suíte ampliada para **28 testes** (unidades dos serviços, paridade de regras de telefone, seleção de UF, regressão de pipeline e config);
+- Correções encontradas pelos testes: pesos do módulo 11 do CNPJ (algoritmo oficial da Receita) e precedência `-D` > env var no `AppConfig.resolve`.
+
 ## 9. Próximos Passos Imediatos
 
 1. **[Feito]** Registrar este plano no repositório.
 2. **[Feito — Fase 0]** Restaurar o `pom.xml` válido, config externa e Logback; legado copiado para `legacy/Main.java`.
-3. **[PRÓXIMO — Fase 1]** Quebrar o `Main` em serviços dedicados (`CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`/`CsvWriterService`, `DeduplicationService`, `ProcessamentoBatchService`, `MetricasProcessamento`) mantendo comportamento idêntico.
-4. Em seguida, Fase 2: suíte de testes ≥80% nos serviços + teste de regressão com dataset de exemplo.
+3. **[Feito — Fase 1]** Quebrar o `Main` em serviços dedicados (`CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`/`CsvWriterService`, `DeduplicationService`, `ProcessamentoBatchService`, `MetricasProcessamento`) mantendo comportamento idêntico.
+4. **[PRÓXIMO — Fase 2]** Elevar cobertura ≥80% nos serviços (JaCoCo) + teste de regressão com dataset de exemplo maior e casos-limite de encoding/delimitador.
