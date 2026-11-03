@@ -5,12 +5,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>br.com.consultaoperadora</groupId>
-    <artifactId>consulta-operadora</artifactId>
+    <artifactId>consulta-operadora-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
-    <name>ConsultaOperadoraV2</name>
-    <description>Processador de CSVs CNPJ x Operadora (Fase 0 - Fundacao do plano de melhoria)</description>
+    <name>ConsultaOperadora - Parent (Fase 3: CLI + Backend Spring Boot)</name>
+    <description>
+        Multi-modulo: raiz = nucleo CLI (Fases 0-2, paridade byte-identica preservada);
+        backend = API REST Spring Boot consumindo o mesmo nucleo (Fase 3).
+    </description>
+
+    <modules>
+        <module>.</module>
+        <module>backend</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -25,6 +33,16 @@
         <mockito.version>5.11.0</mockito.version>
         <jacoco.version>0.8.11</jacoco.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>br.com.consultaoperadora</groupId>
+                <artifactId>consulta-operadora</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Regras de negocio: parsing de CSV e telefonia -->
@@ -85,25 +103,41 @@
 
     <build>
         <finalName>consulta-operadora</finalName>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <release>17</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <release>17</release>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
             </plugin>
             <!-- Fase 2: medicao de cobertura (relatorio em target/site/jacoco) -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -128,8 +162,7 @@
                             <rules>
                                 <rule>
                                     <!-- Meta do plano: >=80% de instrucoes nas classes de negocio/servico.
-                                         Main fica de fora por ser bootstrap CLI (System.exit/printUsage);
-                                         sera substituido pela app Spring Boot na Fase 5. -->
+                                         Main fica de fora por ser bootstrap CLI (System.exit/printUsage). -->
                                     <element>CLASS</element>
                                     <excludes>
                                         <exclude>br.com.consultaoperadora.Main</exclude>
@@ -150,7 +183,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- JAR executavel: mvn package && java -jar target/consulta-operadora.jar -->
+            <!-- JAR executavel CLI: mvn package && java -jar target/consulta-operadora.jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

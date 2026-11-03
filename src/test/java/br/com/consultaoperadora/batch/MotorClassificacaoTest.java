@@ -42,7 +42,7 @@ class MotorClassificacaoTest {
                 .containsEntry("CLARO", 1L);    // 82-9111-1234 -> nono dígito -> 82991111234
         assertThat(r.detalhePorOperadora()).hasSize(2);
         assertThat(r.detalhePorOperadora().get("FIXO"))
-                .anySatisfy(col -> assertThat(col).contains("Alpha Telecom"));
+                .anySatisfy(col -> assertThat(col[1]).isEqualTo("Alpha Telecom Ltda"));
     }
 
     @Test
@@ -50,13 +50,14 @@ class MotorClassificacaoTest {
         Path csv = dir.resolve("pe_clientes.csv");
         Files.writeString(csv, """
                 cnpj_completo,razao_social,endereco_completo,email,ano_abertura,telefones
-                11222333000181,Gamma Ltda,Rua D,10,d@g.com,2011,81-34444555
+                11222333000181,"Gamma Ltda",Rua D,d@g.com,2011,81-34444555
                 """, StandardCharsets.ISO_8859_1);
 
         MotorClassificacaoService.Resultado r =
                 new MotorClassificacaoService(List.of("PE")).classificarArquivo(csv);
 
         assertThat(r.uf()).isEqualTo("PE");
+        assertThat(r.linhasLidas()).isEqualTo(1);
         assertThat(r.registrosUnicos()).isEqualTo(1);
         assertThat(r.contagemPorOperadora()).containsEntry("FIXO", 1L);
     }
@@ -87,7 +88,7 @@ class MotorClassificacaoTest {
         Files.writeString(csv, """
                 cnpj_completo;razao_social;endereco_completo;email;ano_abertura;telefones
                 11222333000181;Sem Telefones;Rua E;;2012
-                33444555000166;Delta SA;Rua F;f@g.com;2013;71-35555666
+                33444555000181;Delta SA;Rua F;f@g.com;2013;71-35555666
                 """, StandardCharsets.ISO_8859_1);
 
         MotorClassificacaoService.Resultado r =

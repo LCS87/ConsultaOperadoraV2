@@ -81,8 +81,8 @@ public final class MotorClassificacaoService {
             if (registro == null) {
                 return; // linha incompleta (paridade com legado)
             }
-            if (!CnpjValidator.isFormatoValido(registro.cnpj())) {
-                return; // CNPJ fora do formato
+            if (!CnpjValidator.isValidoCompleto(registro.cnpj())) {
+                return; // API REST usa critério rígido: formato + dígitos verificadores
             }
             if (!dedup.registerIfNew(registro.cnpj())) {
                 return; // duplicado no arquivo
