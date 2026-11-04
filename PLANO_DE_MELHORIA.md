@@ -273,8 +273,11 @@ ConsultaOperadoraV2/
 | Fase | Status | Commit/Evidência |
 |---|---|---|
 | 0 — Fundação | ✅ **CONCLUÍDA (04/11/2026)** | `mvn clean verify` verde, 13 testes passando, JAR executável validado com CSV de exemplo; legado preservado em `legacy/Main.java` |
-| 1 — Refatoração do núcleo | ⏳ Próxima | — |
-| 2 a 7 | 📅 Pendentes | — |
+| 1 — Refatoração do núcleo | ✅ **CONCLUÍDA** | commit `6f6bb1d`: serviços de responsabilidade única, 28 testes, paridade byte-idêntica |
+| 2 — Suíte de testes | ✅ **CONCLUÍDA** | commit `cdb9d89`: 133 testes verdes, JaCoCo gate LINE ≥80% (real: 83,1%) |
+| 3 — API REST Spring Boot | ✅ **CONCLUÍDA** | multi-módulo Maven (`core` + `backend`), motor sob demanda, OpenAPI/Swagger, testes de integração MockMvc |
+| 4 — Persistência JPA/Hibernate | 🔄 **EM ANDAMENTO (05/11/2026)** | entities + Flyway + dedupe persistente + endpoints `/api/v1` (ver §8.4) |
+| 5 a 7 | 📅 Pendentes | — |
 
 **Entregas da Fase 0:**
 - `pom.xml` válido recriado (Java 17, OpenCSV 5.9, libphonenumber + carrier, SLF4J/Logback, JUnit 5, shade p/ JAR executável);
@@ -307,4 +310,24 @@ ConsultaOperadoraV2/
 2. **[Feito — Fase 0]** Restaurar o `pom.xml` válido, config externa e Logback; legado copiado para `legacy/Main.java`.
 3. **[Feito — Fase 1]** Quebrar o `Main` em serviços dedicados (`CnpjValidator`, `TelefoneNormalizer`, `OperadoraClassifier`, `CsvDelimiterDetector`, `CsvReaderService`/`CsvWriterService`, `DeduplicationService`, `ProcessamentoBatchService`, `MetricasProcessamento`) mantendo comportamento idêntico.
 4. **[Feito — Fase 2]** Cobertura ≥80% via JaCoCo (83,1%), 133 testes verdes, regressão com dataset maior e casos-limite de encoding/delimitador.
-5. **[PRÓXIMO — Fase 3]** Extrair o núcleo para módulo reutilizável e criar a aplicação **Spring Boot** (REST API + OpenAPI/Swagger) consumindo os serviços existentes.
+5. **[Feito — Fase 3]** Núcleo extraído para módulo Maven reutilizável (`core/`) e aplicação **Spring Boot** criada (`backend/`): motor sob demanda + OpenAPI/Swagger + testes de integração MockMvc.
+6. **[PRÓXIMO — Fase 4]** Persistência com Spring Data JPA + Hibernate: entidades `ArquivoOrigem`, `ProcessamentoJob`, `EmpresaRegistroEntity`, `DuplicidadeLog`; migrações Flyway (`V1__init.sql`); deduplicação persistente entre execuções; endpoints `/api/v1` de upload/processamento/consulta/export/dashboard.
+
+## 8.3 Conclusão da Fase 3 (API REST Spring Boot)
+
+- Reator Maven multi-módulo: raiz (`pom.xml` parent) → `core` (regras puras, CLI inalterado) + `backend` (Spring Boot 3.3 consumindo o core sem duplicação);
+- `MotorClassificacaoService`: pipeline sob demanda (upload → classificação em memória), validação rígida de CNPJ (formato + DV) na API vs. paridade do CLI;
+- Endpoints: `POST /api/classificacao` (multipart), `GET /api/cnpj/validar`, `GET /api/telefone/classificar`, `GET /api/dashboard/resumo`;
+- Erros uniformes em JSON (`ApiErrorHandler` @RestControllerAdvice: 400/413/422), sanitização de nome de arquivo (anti path-traversal), limites de multipart 50MB;
+- springdoc-openapi: spec em `/v3/api-docs`, Swagger UI em `/swagger-ui.html`;
+- Testes de integração MockMvc cobrindo ciclo upload→classificação, UF inválida, não-CSV, validação de CNPJ e disponibilidade do OpenAPI; build verde (`mvn clean verify`).
+
+## 8.4 Fase 4 em andamento (Persistência JPA/Hibernate + Flyway)
+
+Plano técnico desta fase:
+- `spring-boot-starter-data-jpa` + H2 (dev/test, arquivo persistente `./data/banco`) e driver PostgreSQL (prod, via profile/env);
+- Flyway `V1__init.sql`: tabelas `arquivo_origem`, `processamento_job`, `empresa_registro` (cnpj UNIQUE), `duplicidade_log`; índices em `(operadora, uf)` e `cnpj`;
+- Entities + repositories Spring Data (paginação nativa), batch insert (`hibernate.jdbc.batch_size=50`);
+- Deduplicação **persistente**: antes de inserir, consulta `empresa_registro` por CNPJ — reprocessar o mesmo arquivo não duplica (critério de aceite da fase);
+- Endpoints versionados `/api/v1` conforme tabela do §FASE 3: upload, processamentos (job assíncrono + status/métricas), registros (filtro paginado + export CSV do banco), dashboard (contagens reais do banco);
+- Compat: endpoints legados da Fase 3 permanecem funcionando até a Fase 6 (frontend consumir só `/api/v1`).
