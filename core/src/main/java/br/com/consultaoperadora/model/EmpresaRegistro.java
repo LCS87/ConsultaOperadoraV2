@@ -1,6 +1,8 @@
 package br.com.consultaoperadora.model;
 
+import br.com.consultaoperadora.model.converter.StringArrayConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -57,7 +59,8 @@ public class EmpresaRegistro {
     private Long jobId;
 
     /** Colunas cruas do CSV (contrato legado com OpenCSV; serializadas para TEXT). */
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "columns", columnDefinition = "TEXT")
+    @Convert(converter = StringArrayConverter.class)
     private String[] columns;
 
     public EmpresaRegistro() {

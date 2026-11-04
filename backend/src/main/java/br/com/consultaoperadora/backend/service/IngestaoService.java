@@ -4,7 +4,6 @@ import br.com.consultaoperadora.model.EmpresaRegistro;
 import br.com.consultaoperadora.model.Operadora;
 import br.com.consultaoperadora.backend.entity.ArquivoOrigemEntity;
 import br.com.consultaoperadora.backend.entity.DuplicidadeLogEntity;
-import br.com.consultaoperadora.backend.entity.EmpresaRegistroEntity;
 import br.com.consultaoperadora.backend.entity.ProcessamentoJobEntity;
 import br.com.consultaoperadora.backend.entity.StatusProcessamento;
 import br.com.consultaoperadora.backend.repository.ArquivoOrigemRepository;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -78,7 +78,12 @@ public class IngestaoService {
      * @throws IOException              falha de leitura/parse do CSV
      */
     @org.springframework.transaction.annotation.Transactional
-    public ProcessamentoJobEntity processar(File csvFile) throws IOException {
+    public ProcessamentoJobEntity processar(java.nio.file.Path csvPath) throws IOException {
+        return processar(csvPath.toFile());
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public ProcessamentoJobEntity processar(File csvFile) {
         String nomeArquivo = csvFile.getName();
         String uf = extrairUf(nomeArquivo);
         if (uf == null) {
@@ -87,7 +92,12 @@ public class IngestaoService {
                             + ufsPermitidas + " (padrões aceitos: uf_*.csv ou *_uf.csv).");
         }
 
-        char delimiter = CsvDelimiterDetector.detect(csvFile, StandardCharsets.ISO_8859_1);
+        char delimiter;
+        try {
+            delimiter = CsvDelimiterDetector.detect(csvFile, StandardCharsets.ISO_8859_1);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
 
         ArquivoOrigemEntity arquivo = new ArquivoOrigemEntity();
         arquivo.setNomeArquivo(nomeArquivo);
@@ -135,12 +145,12 @@ public class IngestaoService {
                     return; // dedupe PERSISTENTE: CNPJ já conhecido não entra de novo
                 }
                 Operadora operadora = OperadoraClassifier.classify(registro.telefonesRaw());
-                registros.save(EmpresaRegistroEntity.from(registro, operadora, uf,
-                        TelefoneNormalizer.normalizeFirstPhoneNumber(registro.telefonesRaw()), job));
+                registros.save(EmpresaRegistro.of(registro.asColumns(), cnpjDigitos, operadora, uf,
+                        TelefoneNormalizer.normalizeFirstPhoneNumber(registro.telefonesRaw()), job.getId()));
                 contagem.merge(operadora, 1, Integer::sum);
                 counters[1]++;
             });
-        } catch (IOException | RuntimeException e) {
+        } catch (UncheckedIOException | RuntimeException e) {
             job.setStatus(StatusProcessamento.FALHA);
             job.setMensagemErro(truncate(e.getMessage(), 500));
             job.setFinalizadoEm(Instant.now());

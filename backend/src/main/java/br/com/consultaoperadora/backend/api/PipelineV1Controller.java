@@ -3,7 +3,7 @@ package br.com.consultaoperadora.backend.api;
 import br.com.consultaoperadora.backend.dto.DashboardV2Response;
 import br.com.consultaoperadora.backend.dto.JobResponse;
 import br.com.consultaoperadora.backend.dto.RegistroResponse;
-import br.com.consultaoperadora.backend.entity.EmpresaRegistroEntity;
+import br.com.consultaoperadora.model.EmpresaRegistro;
 import br.com.consultaoperadora.backend.entity.ProcessamentoJobEntity;
 import br.com.consultaoperadora.backend.service.IngestaoService;
 import br.com.consultaoperadora.backend.service.UploadProcessingService;
@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +64,18 @@ public class PipelineV1Controller {
     @Operation(summary = "Upload + ingestão de um CSV no banco (dedupe persistente por CNPJ)")
     @PostMapping(value = "/arquivos/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<JobResponse> upload(@RequestPart("file") MultipartFile file) throws IOException {
-        ProcessamentoJobEntity job = uploads.processarComPersistencia(file, ingestao::processar);
+        ProcessamentoJobEntity job;
+        try {
+            job = uploads.processarComPersistencia(file, path -> {
+                try {
+                    return ingestao.processar(path);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(toJobResponse(job));
     }
 
@@ -87,17 +99,17 @@ public class PipelineV1Controller {
             @Parameter(example = "AL") @RequestParam(required = false) String uf,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Operadora op = null;
+        String op = null;
         if (operadora != null && !operadora.isBlank()) {
             try {
-                op = Operadora.valueOf(operadora.trim().toUpperCase(java.util.Locale.ROOT));
+                op = Operadora.valueOf(operadora.trim().toUpperCase(java.util.Locale.ROOT)).name();
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Operadora inválida: '" + operadora
                         + "'. Valores aceitos: " + java.util.Arrays.toString(Operadora.values()));
             }
         }
         String ufNorm = (uf == null || uf.isBlank()) ? null : uf.trim().toUpperCase(java.util.Locale.ROOT);
-        Page<EmpresaRegistroEntity> resultado = registrosRepo.buscar(op, ufNorm,
+        Page<EmpresaRegistro> resultado = registrosRepo.buscar(op, ufNorm,
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 200),
                         Sort.by(Sort.Direction.ASC, "id")));
         return Map.of(
@@ -113,8 +125,8 @@ public class PipelineV1Controller {
     public ResponseEntity<StreamingResponseBody> export(
             @RequestParam(required = false) String operadora,
             @RequestParam(required = false) String uf) {
-        Operadora op = (operadora == null || operadora.isBlank())
-                ? null : Operadora.valueOf(operadora.trim().toUpperCase(java.util.Locale.ROOT));
+        String op = (operadora == null || operadora.isBlank())
+                ? null : Operadora.valueOf(operadora.trim().toUpperCase(java.util.Locale.ROOT)).name();
         String ufNorm = (uf == null || uf.isBlank()) ? null : uf.trim().toUpperCase(java.util.Locale.ROOT);
 
         StreamingResponseBody body = out -> {
@@ -122,14 +134,14 @@ public class PipelineV1Controller {
             Writer w = new OutputStreamWriter(out, StandardCharsets.UTF_8);
             w.write("cnpj_completo,razao_social,endereco_completo,email,ano_abertura,telefones,operadora,uf\n");
             int pagina = 0;
-            Page<EmpresaRegistroEntity> lote;
+            Page<EmpresaRegistro> lote;
             do {
                 lote = registrosRepo.buscar(op, ufNorm, PageRequest.of(pagina++, 500));
-                for (EmpresaRegistroEntity e : lote) {
+                for (EmpresaRegistro e : lote) {
                     w.write(String.join(",",
-                            csv(e.getCnpj()), csv(e.getRazaoSocial()), csv(e.getEndereco()),
-                            csv(e.getEmail()), csv(e.getAnoAbertura()), csv(e.getTelefonesRaw()),
-                            e.getOperadora().fileNameToken(), e.getUf()));
+                            csv(e.cnpj()), csv(e.razaoSocial()), csv(e.enderecoCompleto()),
+                            csv(e.email()), csv(e.anoAbertura()), csv(e.telefonesRaw()),
+                            e.getOperadora(), e.getUf()));
                     w.write("\n");
                 }
                 w.flush();
@@ -160,10 +172,10 @@ public class PipelineV1Controller {
                 j.getMensagemErro());
     }
 
-    static RegistroResponse toRegistroResponse(EmpresaRegistroEntity e) {
-        return new RegistroResponse(e.getId(), e.getCnpj(), e.getRazaoSocial(), e.getEndereco(),
-                e.getEmail(), e.getAnoAbertura(), e.getTelefonesRaw(), e.getTelefoneNormalizado(),
-                e.getOperadora().name(), e.getUf());
+    static RegistroResponse toRegistroResponse(EmpresaRegistro e) {
+        return new RegistroResponse(e.getId(), e.cnpj(), e.razaoSocial(), e.enderecoCompleto(),
+                e.email(), e.anoAbertura(), e.telefonesRaw(), e.getTelefoneNormalizado(),
+                e.getOperadora(), e.getUf());
     }
 
     private static String csv(String valor) {
