@@ -83,7 +83,7 @@ public class IngestaoService {
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public ProcessamentoJobEntity processar(File csvFile) {
+    public ProcessamentoJobEntity processar(File csvFile) throws IOException {
         String nomeArquivo = csvFile.getName();
         String uf = extrairUf(nomeArquivo);
         if (uf == null) {
@@ -150,7 +150,16 @@ public class IngestaoService {
                 contagem.merge(operadora, 1, Integer::sum);
                 counters[1]++;
             });
-        } catch (UncheckedIOException | RuntimeException e) {
+        } catch (IOException e) {
+            // falha de leitura/parse do CSV -> registra no job e propaga (contrato do metodo)
+            job.setStatus(StatusProcessamento.FALHA);
+            job.setMensagemErro(truncate(e.getMessage(), 500));
+            job.setFinalizadoEm(Instant.now());
+            job.setLinhasLidas(counters[0]);
+            jobs.save(job);
+            log.error("Job {} falhou ao ler {}", job.getId(), nomeArquivo, e);
+            throw e;
+        } catch (RuntimeException e) { // inclui UncheckedIOException (subclass)
             job.setStatus(StatusProcessamento.FALHA);
             job.setMensagemErro(truncate(e.getMessage(), 500));
             job.setFinalizadoEm(Instant.now());

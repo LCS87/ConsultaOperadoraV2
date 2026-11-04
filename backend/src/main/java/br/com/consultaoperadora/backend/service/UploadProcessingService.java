@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -29,7 +30,15 @@ public class UploadProcessingService {
     }
 
     public MotorClassificacaoService.Resultado processarUpload(MultipartFile file) throws IOException {
-        return comMultipartFileMaterializado(file, destino -> motor.classificarArquivo(destino));
+        // classificarArquivo lanca IOException (verificado) — aqui o lambda precisa propagar
+        // atraves de UncheckedIOException, que e desembalado no catch do pipeline comum.
+        return comMultipartFileMaterializado(file, destino -> {
+            try {
+                return motor.classificarArquivo(destino);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     /**
