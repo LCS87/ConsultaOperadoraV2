@@ -29,6 +29,23 @@ public class UploadProcessingService {
     }
 
     public MotorClassificacaoService.Resultado processarUpload(MultipartFile file) throws IOException {
+        return comMultipartFileMaterializado(file, destino -> motor.classificarArquivo(destino));
+    }
+
+    /**
+     * Ingestão com persistência (Fase 4): mesmo materialize/dele do upload,
+     * mas delega a um consumidor (ex.: {@link IngestaoService#processar}) que
+     * grava job + registros no banco em vez de só classificar em memória.
+     */
+    public <T> T processarComPersistencia(MultipartFile file,
+                                          java.util.function.Function<java.io.File, T> consumidor) throws IOException {
+        return comMultipartFileMaterializado(file,
+                destino -> consumidor.apply(destino.toFile()));
+    }
+
+    /** Pipeline comum: valida, sanitiza, materializa em disco temporário e limpa ao final. */
+    private <T> T comMultipartFileMaterializado(MultipartFile file,
+                                                java.util.function.Function<Path, T> acao) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Arquivo vazio ou ausente no multipart 'file'.");
         }
@@ -43,7 +60,7 @@ public class UploadProcessingService {
             Files.copy(in, destino, StandardCopyOption.REPLACE_EXISTING);
         }
         try {
-            return motor.classificarArquivo(destino);
+            return acao.apply(destino);
         } finally {
             Files.deleteIfExists(destino);
         }
