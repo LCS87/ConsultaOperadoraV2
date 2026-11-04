@@ -25,9 +25,17 @@ class CnpjValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "1234567800019", "123456780001999", "1234567800019a",
-            "12.345.678/0001-99", "12345 67890 123", "-1234567800019"})
+            "12345 67890 123", "-1234567800019"})
     void rejeitaTudoQueNaoSao14DigitosPuros(String cnpj) {
         assertThat(CnpjValidator.isFormatoValido(cnpj)).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"12.345.678/0001-95, true", "12.345.678/0001-99, true"})
+    void mascaraOficialAceitaAposStripDeSeparadores(String cnpj, boolean esperado) {
+        // API REST (Fase 3): entrada com máscara da Receita passa pelo strip de ". / -".
+        // isFormatoValido checa apenas os 14 digitos; DVs ficam para isValidoCompleto.
+        assertThat(CnpjValidator.isFormatoValido(cnpj)).isEqualTo(esperado);
     }
 
     @ParameterizedTest
