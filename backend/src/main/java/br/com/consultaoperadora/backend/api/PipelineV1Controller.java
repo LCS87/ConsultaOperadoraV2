@@ -66,6 +66,8 @@ public class PipelineV1Controller {
     public ResponseEntity<JobResponse> upload(@RequestPart("file") MultipartFile file) throws IOException {
         ProcessamentoJobEntity job;
         try {
+            // ingestao.processar lanca IOException (verificado) -> embalada em UncheckedIOException
+            // e desembalada no catch abaixo.
             job = uploads.processarComPersistencia(file, path -> {
                 try {
                     return ingestao.processar(path);
