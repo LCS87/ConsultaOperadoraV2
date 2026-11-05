@@ -118,6 +118,9 @@ public class IngestaoService {
         Set<String> vistosNoArquivo = new java.util.HashSet<>();
         Map<Operadora, Integer> contagem = new LinkedHashMap<>();
         long[] counters = {0, 0, 0}; // lidas, inseridos, invalidos
+        // chaves (jobId,cnpj) já auditadas — evita violar uk_dup_job_cnpj quando o
+        // mesmo CNPJ se repete mais de uma vez dentro do arquivo
+        Set<String> logsJaGravados = new java.util.HashSet<>();
 
         try {
             reader.forEachLine(csvFile, delimiter, rowData -> {
@@ -139,9 +142,11 @@ public class IngestaoService {
                 }
                 vistosNoArquivo.add(cnpjDigitos);
                 if (motivoDuplicidade != null) {
-                    duplicidades.save(DuplicidadeLogEntity.de(
-                            job.getId(), cnpjDigitos, nomeArquivo, motivoDuplicidade));
                     job.setDuplicadosDescartados(job.getDuplicadosDescartados() + 1);
+                    if (logsJaGravados.add(cnpjDigitos)) {
+                        duplicidades.save(DuplicidadeLogEntity.de(
+                                job.getId(), cnpjDigitos, nomeArquivo, motivoDuplicidade));
+                    }
                     return; // dedupe PERSISTENTE: CNPJ já conhecido não entra de novo
                 }
                 Operadora operadora = OperadoraClassifier.classify(registro.telefonesRaw());
